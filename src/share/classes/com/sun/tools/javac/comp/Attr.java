@@ -2119,11 +2119,22 @@ public class Attr extends JCTree.Visitor {
     public void visitIndexed(JCArrayAccess tree) {
         Type owntype = types.createErrorType(tree.type);
         Type atype = attribExpr(tree.indexed, env);
-        attribExpr(tree.index, env, syms.intType);
+        attribExpr(tree.index, env, syms.intType); // TODO: not only int
         if (types.isArray(atype))
             owntype = types.elemtype(atype);
-        else if (atype.tag != ERROR)
-            log.error(tree.pos(), "array.req.but.found", atype);
+        else if (atype.tag != ERROR) {
+        	List<Type> argtypes = List.of(tree.index.type);
+            Symbol m = rs.findMethod(env, atype, names.fromString("get"), argtypes, null, true, false, false);
+            if (m.kind == Kinds.MTH) {
+                //owntype = rs.instantiate(env, atype, m, argtypes, null, true, false, noteWarner).getReturnType();
+                JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index));
+                attribExpr(mi, env);
+                tree.indexed = mi;
+                owntype = mi.type;
+            }
+            else
+                log.error(tree.pos(), "array.req.but.found", atype);
+        }
         if ((pkind & VAR) == 0) owntype = capture(owntype);
         result = check(tree, owntype, VAR, pkind, pt);
     }
