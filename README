@@ -1,3 +1,9 @@
+This is patched version of JavaC 1.7 for Operator Overloading support.
+
+See also https://github.com/amelentev/lombok-oo
+
+original README:
+
 Building the "langtools" workspace.
 
 The "langtools" workspace can be built from the command line with Ant.
