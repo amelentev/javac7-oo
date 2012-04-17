@@ -2962,6 +2962,7 @@ public class Lower extends TreeTranslator {
     }
 
     public void visitAssign(JCAssign tree) {
+        JCTree waslhs = tree.lhs;
         tree.lhs = translate(tree.lhs, tree);
         tree.rhs = translate(tree.rhs, tree.lhs.type);
 
@@ -2972,8 +2973,8 @@ public class Lower extends TreeTranslator {
             JCMethodInvocation app = (JCMethodInvocation)tree.lhs;
             app.args = List.of(tree.rhs).prependList(app.args);
             result = app;
-        } else if (tree.lhs.getKind() == Tree.Kind.ARRAY_ACCESS && !types.isArray(((JCArrayAccess)tree.lhs).indexed.type)) {
-            result = ((JCArrayAccess) tree.lhs).indexed;
+        } else if (waslhs.getKind() == Tree.Kind.ARRAY_ACCESS && !types.isArray(((JCArrayAccess)waslhs).indexed.type)) {
+            result = tree.lhs;
         } else {
             result = tree;
         }

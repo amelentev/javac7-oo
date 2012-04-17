@@ -2120,10 +2120,11 @@ public class Attr extends JCTree.Visitor {
     public void visitIndexed(JCArrayAccess tree) {
         Type owntype = types.createErrorType(tree.type);
         Type atype = attribExpr(tree.indexed, env);
-        attribExpr(tree.index, env, syms.intType); // TODO: not only int
-        if (types.isArray(atype))
+        if (types.isArray(atype)) {
+            attribExpr(tree.index, env, syms.intType);
             owntype = types.elemtype(atype);
-        else if (atype.tag != ERROR) {
+        } else if (atype.tag != ERROR) {
+            attribExpr(tree.index, env);
             boolean ok = false;
             if (env.tree.getKind() == Tree.Kind.ASSIGNMENT) {
                 JCAssign ass = (JCAssign) env.tree;
@@ -2131,8 +2132,10 @@ public class Attr extends JCTree.Visitor {
                     Type rhstype = attribExpr(ass.rhs, env);
                     List<Type> argtypes = List.of(tree.index.type, rhstype);
                     Symbol m = rs.findMethod(env, atype, names.fromString("set"), argtypes, null, true, false, false);
+                    if (m.kind != Kinds.MTH)
+                        m = rs.findMethod(env, atype, names.fromString("put"), argtypes, null, true, false, false); // Map#put
                     if (m.kind == Kinds.MTH) {
-                        JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs)); // ass.rhs added to args at Lower#visitAssign
+                        JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs));
                         mi.type = attribExpr(mi, env);
                         tree.indexed = mi;
                         owntype = rhstype;
