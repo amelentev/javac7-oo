@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileObject;
 
+import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
@@ -2123,16 +2124,35 @@ public class Attr extends JCTree.Visitor {
         if (types.isArray(atype))
             owntype = types.elemtype(atype);
         else if (atype.tag != ERROR) {
-        	List<Type> argtypes = List.of(tree.index.type);
-            Symbol m = rs.findMethod(env, atype, names.fromString("get"), argtypes, null, true, false, false);
-            if (m.kind == Kinds.MTH) {
-                //owntype = rs.instantiate(env, atype, m, argtypes, null, true, false, noteWarner).getReturnType();
-                JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index));
-                attribExpr(mi, env);
-                tree.indexed = mi;
-                owntype = mi.type;
+            boolean ok = false;
+            if (env.tree.getKind() == Tree.Kind.ASSIGNMENT) {
+                JCAssign ass = (JCAssign) env.tree;
+                if (ass.lhs == tree) {
+                    Type rhstype = attribExpr(ass.rhs, env);
+                    List<Type> argtypes = List.of(tree.index.type, rhstype);
+                    Symbol m = rs.findMethod(env, atype, names.fromString("set"), argtypes, null, true, false, false);
+                    if (m.kind == Kinds.MTH) {
+                        JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs)); // ass.rhs added to args at Lower#visitAssign
+                        mi.type = attribExpr(mi, env);
+                        tree.indexed = mi;
+                        owntype = rhstype;
+                        ok = true;
+                    }
+                }
             }
-            else
+            if (!ok) {
+                List<Type> argtypes = List.of(tree.index.type);
+                Symbol m = rs.findMethod(env, atype, names.fromString("get"), argtypes, null, true, false, false);
+                if (m.kind == Kinds.MTH) {
+                    //owntype = rs.instantiate(env, atype, m, argtypes, null, true, false, noteWarner).getReturnType();
+                    JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index));
+                    attribExpr(mi, env);
+                    tree.indexed = mi;
+                    owntype = mi.type;
+                    ok = true;
+                }
+            }
+            if (!ok)
                 log.error(tree.pos(), "array.req.but.found", atype);
         }
         if ((pkind & VAR) == 0) owntype = capture(owntype);

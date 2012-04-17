@@ -27,6 +27,7 @@ package com.sun.tools.javac.comp;
 
 import java.util.*;
 
+import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.main.RecognizedOptions.PkgInfo;
@@ -2956,7 +2957,6 @@ public class Lower extends TreeTranslator {
         	tree.index = translate(tree.index, syms.intType);
         	result = tree;
     	} else {
-    		// TODO: translate to method call tree.indexed.get(tree.index)
     		result = translate(tree.indexed);
     	}
     }
@@ -2972,6 +2972,8 @@ public class Lower extends TreeTranslator {
             JCMethodInvocation app = (JCMethodInvocation)tree.lhs;
             app.args = List.of(tree.rhs).prependList(app.args);
             result = app;
+        } else if (tree.lhs.getKind() == Tree.Kind.ARRAY_ACCESS && !types.isArray(((JCArrayAccess)tree.lhs).indexed.type)) {
+            result = ((JCArrayAccess) tree.lhs).indexed;
         } else {
             result = tree;
         }

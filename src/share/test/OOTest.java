@@ -2,6 +2,7 @@ import com.sun.tools.javac.Main;
 
 public class OOTest {
     public static void main(String[] args) throws Exception {
-        Main.main(new String[]{"src/share/sample/IndexOverloadTest.java"});
+        Main.compile(new String[]{"src/share/sample/ListIndexGetTest.java"});
+        Main.compile(new String[]{"src/share/sample/ListIndexSetTest.java"});
     }
 }
