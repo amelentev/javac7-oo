@@ -2,10 +2,8 @@
 ^dist/
 /nbproject/private/
 ^.hgtip
-.idea
 ^out
 ^bin
 
 syntax: glob
-*.iml
 *.class
