@@ -2,7 +2,7 @@ This is patched version of JavaC 1.7 for Operator Overloading support.
 See examples at src/share/sample/*.java
 
 You can merge this patches to nb-javac[1] (the javac fork for netbeans ide) and you will get operator overloading in netbeans ide natively.
-($ cp nb-javac/ netbeans/; cd netbeans; ant -f libs.javacimpl)
+($ cp -r nb-javac/ netbeans/; cd netbeans/; ant -f libs.javacimpl/)
 [1] http://hg.netbeans.org/main/nb-javac/
 
 See also https://github.com/amelentev/lombok-oo

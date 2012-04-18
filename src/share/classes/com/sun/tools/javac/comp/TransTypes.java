@@ -676,7 +676,7 @@ public class TransTypes extends TreeTranslator {
         tree.index = translate(tree.index, syms.intType);
 
         // Insert casts of indexed expressions as needed.
-        Type elemtype = types.elemtype(tree.indexed.type); // TODO:
+        Type elemtype = types.elemtype(tree.indexed.type);
         if (elemtype != null)
         	result = retype(tree, elemtype, pt);
         else
