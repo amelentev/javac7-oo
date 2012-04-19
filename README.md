@@ -2,7 +2,7 @@ JavaC 1.7 + Operator Overloading
 -------------------------------
 
 This is patched version of [JavaC 1.7] for Operator Overloading support.
-See examples at src/share/sample/\*.java
+See examples at sample/\*.java
 
 See also [java-oo], [lombok-oo].
 
