@@ -6,5 +6,6 @@ public class MathTest {
                 b = BigInteger.TEN,
                 c = a + b * b + b/b;
         System.out.println(c.equals(BigInteger.valueOf(102)));
+	System.out.println((-c).toString().equals("-102"));
     }
 }
