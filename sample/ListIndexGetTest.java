@@ -8,6 +8,6 @@ public class ListIndexGetTest {
         int resa = arr[0];
         int resl1 = lst.get(0);
         int resl2 = lst[0];
-        System.out.println(resl2 == resa);
+        System.out.println(resl2==resa && resl1==resa);
     }
 }
