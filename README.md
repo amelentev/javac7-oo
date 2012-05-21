@@ -35,6 +35,6 @@ If you want just update nb-javac:
 
 This will update your nbbuild/netbeans/java/modules/ext/javac-impl-nb-7.0-b07.jar
 
-[java-oo]: http://bitbucket.org/amelentev/java-oo
+[java-oo]: http://amelentev.github.com/java-oo/
 [lombok-oo]: http://github.com/amelentev/lombok-oo
 [javac 1.7]: http://hg.openjdk.java.net/jdk7/jdk7/langtools/
