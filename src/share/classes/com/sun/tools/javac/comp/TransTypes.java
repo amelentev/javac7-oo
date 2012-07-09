@@ -585,6 +585,14 @@ public class TransTypes extends TreeTranslator {
     public void visitApply(JCMethodInvocation tree) {
         tree.meth = translate(tree.meth, null);
         Symbol meth = TreeInfo.symbol(tree.meth);
+        if (tree.args.length() + 1 == meth.type.getParameterTypes().length()) { // extension method?
+        	JCIdent emeth = make.Ident(((JCFieldAccess) tree.meth).name);
+    		emeth.pos = tree.meth.pos;
+    		emeth.sym = meth;
+    		emeth.type = tree.meth.type;
+    		tree.args = tree.args.prepend(((JCFieldAccess) tree.meth).selected);
+    		tree.meth = emeth;
+        }
         Type mt = meth.erasure(types);
         List<Type> argtypes = mt.getParameterTypes();
         if (allowEnums &&
@@ -594,7 +602,7 @@ public class TransTypes extends TreeTranslator {
         if (tree.varargsElement != null)
             tree.varargsElement = types.erasure(tree.varargsElement);
         else
-            Assert.check(tree.args.length() == argtypes.length());
+    		Assert.check(tree.args.length() == argtypes.length());
         tree.args = translateArgs(tree.args, argtypes, tree.varargsElement);
 
         // Insert casts of method invocation results as needed.

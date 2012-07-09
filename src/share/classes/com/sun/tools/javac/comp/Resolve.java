@@ -1497,12 +1497,18 @@ public class Resolve {
                         site, name, null, argtypes);
             }
             else {
+            	// TODO: extension methods
+            	sym = this.resolveMethod(pos, env, name, argtypes.prepend(site), typeargtypes);
+            	if (sym.kind == MTH)
+            		; // todo: extension method mark
                 //if nothing is found return the 'first' error
-                MethodResolutionPhase errPhase =
-                        firstErroneousResolutionPhase();
-                sym = access(methodResolutionCache.get(errPhase),
-                        pos, location, site, name, true, argtypes, typeargtypes);
-                env.info.varArgs = errPhase.isVarargsRequired;
+            	if (sym.kind >= AMBIGUOUS) {
+	                MethodResolutionPhase errPhase =
+	                        firstErroneousResolutionPhase();
+	                sym = access(methodResolutionCache.get(errPhase),
+	                        pos, location, site, name, true, argtypes, typeargtypes);
+	                env.info.varArgs = errPhase.isVarargsRequired;
+            	}
             }
         } else if (allowMethodHandles && sym.isPolymorphicSignatureGeneric()) {
             //non-instantiated polymorphic signature - synthesize new method symbol

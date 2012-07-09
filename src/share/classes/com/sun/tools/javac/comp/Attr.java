@@ -26,7 +26,6 @@
 package com.sun.tools.javac.comp;
 
 import java.util.*;
-import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.tools.JavaFileObject;
 
@@ -34,6 +33,7 @@ import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.tree.*;
+import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
@@ -46,6 +46,7 @@ import com.sun.tools.javac.code.Type.*;
 
 import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.MemberSelectTree;
+import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.TreeVisitor;
 import com.sun.source.util.SimpleTreeVisitor;
 
@@ -2735,7 +2736,7 @@ public class Attr extends JCTree.Visitor {
     public Type checkMethod(Type site,
                             Symbol sym,
                             Env<AttrContext> env,
-                            final List<JCExpression> argtrees,
+                            List<JCExpression> argtrees,
                             List<Type> argtypes,
                             List<Type> typeargtypes,
                             boolean useVarargs) {
@@ -2767,6 +2768,12 @@ public class Attr extends JCTree.Visitor {
                                       true,
                                       useVarargs,
                                       noteWarner);
+        if (owntype == null) { // extension method?
+        	owntype = sym.type;
+        	MethodInvocationTree mit = (MethodInvocationTree) env.tree;
+        	JCFieldAccess fa = (JCFieldAccess) mit.getMethodSelect();
+        	argtrees = argtrees.prepend(fa.getExpression());
+        }
         boolean warned = noteWarner.hasNonSilentLint(LintCategory.UNCHECKED);
 
         // If this fails, something went wrong; we should not have
