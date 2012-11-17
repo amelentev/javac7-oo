@@ -2,6 +2,7 @@ import com.sun.tools.javac.Main;
 
 public class JCOOTest {
     public static void main(String[] args) throws Exception {
+        compile("ValueOf");
         compile("Math");
         compile("Cmp");
         compile("ListIndexGet");

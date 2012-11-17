@@ -2163,6 +2163,11 @@ public class Lower extends TreeTranslator {
                 Integer endPos = endPositions.remove(tree);
                 if (endPos != null) endPositions.put(result, endPos);
             }
+            if (result.translate!=null) {
+            	T t = (T) result.translate;
+            	result.translate = null;
+            	return translate(t);
+            }
             return result;
         }
     }

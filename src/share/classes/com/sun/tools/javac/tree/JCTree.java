@@ -334,6 +334,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /* The type of this node.
      */
     public Type type;
+    
+    public JCExpression translate;
 
     /* The tag of this node -- one of the constants declared above.
      */
