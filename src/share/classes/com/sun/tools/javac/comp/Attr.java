@@ -200,18 +200,14 @@ public class Attr extends JCTree.Visitor {
     Type check(JCTree tree, Type owntype, int ownkind, int pkind, Type pt) {
         if (owntype.tag != ERROR && pt.tag != METHOD && pt.tag != FORALL) {
             if ((ownkind & ~pkind) == 0) {
-            	if (quietCheckType(tree.pos(), owntype, pt, errKey).isErroneous()) { // if not ok
-            		// try boxing via #valueOf
-            		JCExpression t = make.Select(make.Ident(pt.tsym), names.fromString("valueOf"));
-            		t = make.Apply(null, t, List.of((JCExpression)(tree.translate==null ? tree.clone() : tree.translate)));
-            		t.type = attribTree(t, env, pkind, pt);
-	            	if (!t.type.isErroneous()) {
-	            		owntype = t.type;
-	            		tree.translate = t;
-	            	} else
-	            		owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
-            	} else
-            		owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
+                if (quietCheckType(tree.pos(), owntype, pt, errKey).isErroneous()){ // if not ok
+                    JCExpression t = tryBoxingOverload(tree, pt);
+                    if (t != null) {
+                        tree.translate = t;
+                        return tree.type = t.type;
+                    }
+                }
+                owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
             } else {
                 log.error(tree.pos(), "unexpected.type",
                           kindNames(pkind),
@@ -222,26 +218,21 @@ public class Attr extends JCTree.Visitor {
         tree.type = owntype;
         return owntype;
     }
-    /// quiet version of chk.checkType
+    /** try boxing tree to pt type via #valueOf */
+    JCExpression tryBoxingOverload(JCTree tree, Type pt) {
+        JCExpression t = make.Select(make.Ident(pt.tsym), names.fromString("valueOf"));
+        t = make.Apply(null, t, List.of((JCExpression)(tree.translate==null ? tree.clone() : tree.translate)));
+        t.type = attribTree(t, env, pkind, pt);
+        return t.type.isErroneous() ? null : t;
+    }
+    /// quiet subset of chk.checkType
     Type quietCheckType(DiagnosticPosition pos, Type found, Type req, String errKey) {
         if (req.tag == ERROR)
             return req;
-        if (found.tag == FORALL)
-            return chk.instantiatePoly(pos, (ForAll)found, req, new Warner());
         if (req.tag == NONE)
             return found;
         if (types.isAssignable(found, req, new Warner()))
             return found;
-        if (found.tag <= DOUBLE && req.tag <= DOUBLE)
-            return types.createErrorType(found);
-        if (found.isSuperBound()) {
-            log.error(pos, "assignment.from.super-bound", found);
-            return types.createErrorType(found);
-        }
-        if (req.isExtendsBound()) {
-            log.error(pos, "assignment.to.extends-bound", req);
-            return types.createErrorType(found);
-        }
         return types.createErrorType(found);
     }
 
