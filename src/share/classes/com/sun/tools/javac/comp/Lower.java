@@ -2163,11 +2163,9 @@ public class Lower extends TreeTranslator {
                 Integer endPos = endPositions.remove(tree);
                 if (endPos != null) endPositions.put(result, endPos);
             }
-            if (result.translate!=null) {
-            	T t = (T) result.translate;
-            	result.translate = null;
-            	return translate(t);
-            }
+            JCExpression t = attr.removeTranslate(tree);
+            if (t!=null)
+                return (T) translate(t);
             return result;
         }
     }
@@ -2175,6 +2173,9 @@ public class Lower extends TreeTranslator {
     /** Visitor method: Translate a single node, boxing or unboxing if needed.
      */
     public <T extends JCTree> T translate(T tree, Type type) {
+        JCExpression t = attr.removeTranslate(tree);
+        if (t!=null)
+            return (T) translate(t);
         return (tree == null) ? null : boxIfNeeded(translate(tree), type);
     }
 

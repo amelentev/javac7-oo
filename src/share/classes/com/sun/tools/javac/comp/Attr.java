@@ -201,10 +201,10 @@ public class Attr extends JCTree.Visitor {
         if (owntype.tag != ERROR && pt.tag != METHOD && pt.tag != FORALL) {
             if ((ownkind & ~pkind) == 0) {
                 if (quietCheckType(tree.pos(), owntype, pt, errKey).isErroneous()){ // if not ok
-                    JCExpression t = tryBoxingOverload(tree, pt);
+                    JCExpression t = tryBoxingOverload((JCExpression) tree, pt);
                     if (t != null) {
-                        tree.translate = t;
-                        return tree.type = t.type;
+                        addTranslate(tree, t);
+                        return tree.type = owntype;
                     }
                 }
                 owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
@@ -218,10 +218,18 @@ public class Attr extends JCTree.Visitor {
         tree.type = owntype;
         return owntype;
     }
+    private WeakHashMap<JCTree, JCExpression> translatesMap = new WeakHashMap<>();
+    public void addTranslate(JCTree from, JCExpression to) {
+        translatesMap.put(from, to);
+    }
+    public JCExpression removeTranslate(JCTree from) {
+        return translatesMap.remove(from);
+    }
     /** try boxing tree to pt type via #valueOf */
-    JCExpression tryBoxingOverload(JCTree tree, Type pt) {
+    JCExpression tryBoxingOverload(JCExpression tree, Type pt) {
         JCExpression t = make.Select(make.Ident(pt.tsym), names.fromString("valueOf"));
-        t = make.Apply(null, t, List.of((JCExpression)(tree.translate==null ? tree.clone() : tree.translate)));
+        JCExpression param = translatesMap.get(tree);
+        t = make.Apply(null, t, List.of(param == null ? tree : param));
         t.type = attribTree(t, env, pkind, pt);
         return t.type.isErroneous() ? null : t;
     }
