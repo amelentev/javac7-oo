@@ -184,6 +184,9 @@ public class Attr extends JCTree.Visitor {
      */
     String sourceName;
 
+    /** WeakHashMap to allow GC collect entries. Because we don't need them then they are gone */
+    public Map<JCTree, JCExpression> translateMap = new WeakHashMap<>();
+
     /** Check kind and type of given tree against protokind and prototype.
      *  If check succeeds, store type in tree and return it.
      *  If check fails, store errType in tree and return it.
@@ -202,7 +205,7 @@ public class Attr extends JCTree.Visitor {
             if ((ownkind & ~pkind) == 0) {
                 JCExpression t = tryImplicitConversion(tree, owntype, pt);
                 if (t != null) {
-                    putTranslate(tree, t);
+                    translateMap.put(tree, t);
                     return tree.type = owntype;
                 }
                 owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
@@ -215,14 +218,6 @@ public class Attr extends JCTree.Visitor {
         }
         tree.type = owntype;
         return owntype;
-    }
-    /** WeakHashMap to allow GC collect entries. Because we don't need them then they are gone */
-    private Map<JCTree, JCExpression> translateMap = new WeakHashMap<>();
-    public void putTranslate(JCTree from, JCExpression to) {
-        translateMap.put(from, to);
-    }
-    public JCExpression removeTranslate(JCTree from) {
-        return translateMap.remove(from);
     }
     /** try implicit conversion tree to pt type via #valueOf
      * @return static valueOf method call iff successful */
@@ -2192,7 +2187,7 @@ public class Attr extends JCTree.Visitor {
                 if (m.kind == Kinds.MTH) {
                     JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs));
                     mi.type = attribExpr(mi, env);
-                    putTranslate(ass, mi);
+                    translateMap.put(ass, mi);
                     owntype = rhstype;
                     ok = true;
                 }
@@ -2203,7 +2198,7 @@ public class Attr extends JCTree.Visitor {
                     //owntype = rs.instantiate(env, atype, m, argtypes, null, true, false, noteWarner).getReturnType();
                     JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index));
                     attribExpr(mi, env);
-                    putTranslate(tree, mi);
+                    translateMap.put(tree, mi);
                     owntype = mi.type;
                     ok = true;
                 }

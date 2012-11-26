@@ -974,51 +974,9 @@ public class Resolve {
                     bestSoFar = concrete;
             }
         }
-        if (bestSoFar.kind >= ERR && operator) { // try operator overloading
-            String opname = null;
-            List<Type> args = List.nil();
-            if (argtypes.size() == 2) {
-                opname = binaryOperators.get(name.toString());
-                args = List.of(argtypes.get(1));
-            } else if (argtypes.size() == 1)
-                opname = unaryOperators.get(name.toString());
-            if (opname != null) {
-                Symbol method = findMethod(env, argtypes.get(0), names.fromString(opname), 
-                        args, null, false, false, false);
-                if (method.kind == Kinds.MTH) {
-                    bestSoFar = new OperatorSymbol(method.name, method.type, ByteCodes.error+1, method);
-                    if ("compareTo".equals(opname)) { // change result type to boolean if </>
-                        MethodType oldmt = (MethodType) method.type;
-                        bestSoFar.type = new Type.MethodType(oldmt.argtypes, syms.booleanType, oldmt.thrown, oldmt.tsym);
-                    }
-                }
-            }
-        }
+        bestSoFar = tryOperatorOverloading(env, name, argtypes, bestSoFar, operator);
         return bestSoFar;
     }
-
-    @SuppressWarnings("serial")
-    java.util.Map<String, String> binaryOperators = new java.util.HashMap<String, String>() {{
-        put("+", "add");
-        put("-", "subtract");
-        put("*", "multiply");
-        put("/", "divide");
-        put("%", "remainder");
-        put("&", "and");
-        put("|", "or");
-        put("^", "xor");
-        put("<<", "shiftLeft");
-        put(">>", "shiftRight");
-        put("<", "compareTo");
-        put(">", "compareTo");
-        put("<=", "compareTo");
-        put(">=", "compareTo");
-    }};
-    @SuppressWarnings("serial")
-    java.util.Map<String, String> unaryOperators = new java.util.HashMap<String, String>() {{
-        put("-", "negate");
-        put("~", "not");
-    }};
 
     /** Find unqualified method matching given name, type and value arguments.
      *  @param env       The current environment.
@@ -2435,6 +2393,54 @@ public class Resolve {
             sym = methodResolutionCache.get(steps.head);
             bestSoFar = steps.head;
             steps = steps.tail;
+        }
+        return bestSoFar;
+    }
+
+    // Operator Overloading stuff
+    @SuppressWarnings("serial")
+    java.util.Map<String, String> binaryOperators = new java.util.HashMap<String, String>() {{
+        put("+", "add");
+        put("-", "subtract");
+        put("*", "multiply");
+        put("/", "divide");
+        put("%", "remainder");
+        put("&", "and");
+        put("|", "or");
+        put("^", "xor");
+        put("<<", "shiftLeft");
+        put(">>", "shiftRight");
+        put("<", "compareTo");
+        put(">", "compareTo");
+        put("<=", "compareTo");
+        put(">=", "compareTo");
+    }};
+    @SuppressWarnings("serial")
+    java.util.Map<String, String> unaryOperators = new java.util.HashMap<String, String>() {{
+        put("-", "negate");
+        put("~", "not");
+    }};
+
+    Symbol tryOperatorOverloading(Env<AttrContext> env, Name name, List<Type> argtypes, Symbol bestSoFar, boolean operator) {
+        if (bestSoFar.kind >= ERR && operator) {
+            String opname = null;
+            List<Type> args = List.nil();
+            if (argtypes.size() == 2) {
+                opname = binaryOperators.get(name.toString());
+                args = List.of(argtypes.get(1));
+            } else if (argtypes.size() == 1)
+                opname = unaryOperators.get(name.toString());
+            if (opname != null) {
+                Symbol method = findMethod(env, argtypes.get(0), names.fromString(opname),
+                        args, null, false, false, false);
+                if (method.kind == Kinds.MTH) {
+                    bestSoFar = new OperatorSymbol(method.name, method.type, ByteCodes.error+1, method);
+                    if ("compareTo".equals(opname)) { // change result type to boolean if </>
+                        MethodType oldmt = (MethodType) method.type;
+                        bestSoFar.type = new Type.MethodType(oldmt.argtypes, syms.booleanType, oldmt.thrown, oldmt.tsym);
+                    }
+                }
+            }
         }
         return bestSoFar;
     }

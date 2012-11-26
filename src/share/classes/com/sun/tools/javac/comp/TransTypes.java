@@ -420,7 +420,7 @@ public class TransTypes extends TreeTranslator {
 
     @Override
     public <T extends JCTree> T translate(T tree) {
-        JCExpression t = attr.removeTranslate(tree);
+        JCExpression t = attr.translateMap.remove(tree);
         if (t!=null)
             return (T) translate(t);
         return super.translate(tree);
