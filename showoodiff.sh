@@ -1,1 +1,1 @@
-hg diff -r default:oo src/share/classes
+hg diff -r default src/share/classes
