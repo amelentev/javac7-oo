@@ -200,12 +200,10 @@ public class Attr extends JCTree.Visitor {
     Type check(JCTree tree, Type owntype, int ownkind, int pkind, Type pt) {
         if (owntype.tag != ERROR && pt.tag != METHOD && pt.tag != FORALL) {
             if ((ownkind & ~pkind) == 0) {
-                if (quietCheckType(tree.pos(), owntype, pt, errKey).isErroneous()){ // if not ok
-                    JCExpression t = tryBoxingOverload((JCExpression) tree, pt);
-                    if (t != null) {
-                        addTranslate(tree, t);
-                        return tree.type = owntype;
-                    }
+                JCExpression t = tryImplicitConversion(tree, owntype, pt);
+                if (t != null) {
+                    addTranslate(tree, t);
+                    return tree.type = owntype;
                 }
                 owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
             } else {
@@ -218,30 +216,49 @@ public class Attr extends JCTree.Visitor {
         tree.type = owntype;
         return owntype;
     }
-    private WeakHashMap<JCTree, JCExpression> translatesMap = new WeakHashMap<>();
+    /** WeakHashMap to allow GC collect entries. Because we don't need them then they are gone */
+    private Map<JCTree, JCExpression> translateMap = new WeakHashMap<>();
     public void addTranslate(JCTree from, JCExpression to) {
-        translatesMap.put(from, to);
+        translateMap.put(from, to);
     }
     public JCExpression removeTranslate(JCTree from) {
-        return translatesMap.remove(from);
+        return translateMap.remove(from);
     }
-    /** try boxing tree to pt type via #valueOf */
-    JCExpression tryBoxingOverload(JCExpression tree, Type pt) {
-        JCExpression t = make.Select(make.Ident(pt.tsym), names.fromString("valueOf"));
-        JCExpression param = translatesMap.get(tree);
-        t = make.Apply(null, t, List.of(param == null ? tree : param));
-        t.type = attribTree(t, env, pkind, pt);
-        return t.type.isErroneous() ? null : t;
+    /** try implicit conversion tree to pt type via #valueOf
+     * @return static valueOf method call iff successful */
+    JCMethodInvocation tryImplicitConversion(JCTree tree, Type owntype, Type req) {
+        if (!isBoxingAllowed(owntype, req))
+            return null;
+        JCExpression param = translateMap.get(tree);
+        // construct "<req>.valueOf(tree)" static method call
+        tree.type = owntype;
+        JCMethodInvocation valueOf = make.Apply(null,
+                make.Select(make.Ident(pt.tsym), names.fromString("valueOf")),
+                List.of(param == null ? (JCExpression)tree : param));
+        valueOf.type = attribTree(valueOf, env, pkind, pt);
+        return types.isAssignable(valueOf.type, req) ? valueOf : null;
     }
-    /// quiet subset of chk.checkType
-    Type quietCheckType(DiagnosticPosition pos, Type found, Type req, String errKey) {
+    boolean isBoxingAllowed(Type found, Type req) {
+        // similar to Check#checkType
         if (req.tag == ERROR)
-            return req;
+            return false; // req
+        if (found.tag == FORALL)
+            return false; // chk.instantiatePoly(pos, (ForAll)found, req, convertWarner(pos, found, req));
         if (req.tag == NONE)
-            return found;
-        if (types.isAssignable(found, req, new Warner()))
-            return found;
-        return types.createErrorType(found);
+            return false; //found;
+        if (types.isAssignable(found, req)) //convertWarner(pos, found, req)))
+            return false; // found;
+        if (found.tag <= DOUBLE && req.tag <= DOUBLE)
+            return false; // typeError(pos, diags.fragment("possible.loss.of.precision"), found, req);
+        if (found.isSuperBound()) {
+            //log.error(pos, "assignment.from.super-bound", found);
+            return false; //types.createErrorType(found);
+        }
+        if (req.isExtendsBound()) {
+            //log.error(pos, "assignment.to.extends-bound", req);
+            return false; //types.createErrorType(found);
+        }
+        return true;
     }
 
     /** Is given blank final variable assignable, i.e. in a scope where it
