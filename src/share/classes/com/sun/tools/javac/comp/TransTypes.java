@@ -69,6 +69,7 @@ public class TransTypes extends TreeTranslator {
     private boolean allowEnums;
     private Types types;
     private final Resolve resolve;
+    private Attr attr;
 
     /**
      * Flag to indicate whether or not to generate bridge methods.
@@ -90,6 +91,7 @@ public class TransTypes extends TreeTranslator {
         types = Types.instance(context);
         make = TreeMaker.instance(context);
         resolve = Resolve.instance(context);
+        attr = Attr.instance(context);
     }
 
     /** A hashtable mapping bridge methods to the methods they override after
@@ -416,6 +418,14 @@ public class TransTypes extends TreeTranslator {
      */
     private Type pt;
 
+    @Override
+    public <T extends JCTree> T translate(T tree) {
+        JCExpression t = attr.removeTranslate(tree);
+        if (t!=null)
+            return (T) translate(t);
+        return super.translate(tree);
+    }
+
     /** Visitor method: perform a type translation on tree.
      */
     public <T extends JCTree> T translate(T tree, Type pt) {
@@ -676,11 +686,7 @@ public class TransTypes extends TreeTranslator {
         tree.index = translate(tree.index, syms.intType);
 
         // Insert casts of indexed expressions as needed.
-        Type elemtype = types.elemtype(tree.indexed.type);
-        if (elemtype != null)
-        	result = retype(tree, elemtype, pt);
-        else
-        	result = tree;
+        result = retype(tree, types.elemtype(tree.indexed.type), pt);
     }
 
     // There ought to be nothing to rewrite here;

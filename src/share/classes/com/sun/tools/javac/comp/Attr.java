@@ -202,7 +202,7 @@ public class Attr extends JCTree.Visitor {
             if ((ownkind & ~pkind) == 0) {
                 JCExpression t = tryImplicitConversion(tree, owntype, pt);
                 if (t != null) {
-                    addTranslate(tree, t);
+                    putTranslate(tree, t);
                     return tree.type = owntype;
                 }
                 owntype = chk.checkType(tree.pos(), owntype, pt, errKey);
@@ -218,7 +218,7 @@ public class Attr extends JCTree.Visitor {
     }
     /** WeakHashMap to allow GC collect entries. Because we don't need them then they are gone */
     private Map<JCTree, JCExpression> translateMap = new WeakHashMap<>();
-    public void addTranslate(JCTree from, JCExpression to) {
+    public void putTranslate(JCTree from, JCExpression to) {
         translateMap.put(from, to);
     }
     public JCExpression removeTranslate(JCTree from) {
@@ -2182,31 +2182,28 @@ public class Attr extends JCTree.Visitor {
         } else if (atype.tag != ERROR) {
             attribExpr(tree.index, env);
             boolean ok = false;
-            if (env.tree.getKind() == Tree.Kind.ASSIGNMENT) {
+            if (env.tree.getKind() == Tree.Kind.ASSIGNMENT && ((JCAssign)env.tree).lhs == tree) {
                 JCAssign ass = (JCAssign) env.tree;
-                if (ass.lhs == tree) {
-                    Type rhstype = attribExpr(ass.rhs, env);
-                    List<Type> argtypes = List.of(tree.index.type, rhstype);
-                    Symbol m = rs.findMethod(env, atype, names.fromString("set"), argtypes, null, true, false, false);
-                    if (m.kind != Kinds.MTH)
-                        m = rs.findMethod(env, atype, names.fromString("put"), argtypes, null, true, false, false); // Map#put
-                    if (m.kind == Kinds.MTH) {
-                        JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs));
-                        mi.type = attribExpr(mi, env);
-                        tree.indexed = mi;
-                        owntype = rhstype;
-                        ok = true;
-                    }
+                Type rhstype = attribExpr(ass.rhs, env);
+                List<Type> argtypes = List.of(tree.index.type, rhstype);
+                Symbol m = rs.findMethod(env, atype, names.fromString("set"), argtypes, null, true, false, false);
+                if (m.kind != Kinds.MTH)
+                    m = rs.findMethod(env, atype, names.fromString("put"), argtypes, null, true, false, false); // Map#put
+                if (m.kind == Kinds.MTH) {
+                    JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs));
+                    mi.type = attribExpr(mi, env);
+                    putTranslate(ass, mi);
+                    owntype = rhstype;
+                    ok = true;
                 }
-            }
-            if (!ok) {
+            } else {
                 List<Type> argtypes = List.of(tree.index.type);
                 Symbol m = rs.findMethod(env, atype, names.fromString("get"), argtypes, null, true, false, false);
                 if (m.kind == Kinds.MTH) {
                     //owntype = rs.instantiate(env, atype, m, argtypes, null, true, false, noteWarner).getReturnType();
                     JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index));
                     attribExpr(mi, env);
-                    tree.indexed = mi;
+                    putTranslate(tree, mi);
                     owntype = mi.type;
                     ok = true;
                 }

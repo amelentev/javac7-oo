@@ -27,7 +27,6 @@ package com.sun.tools.javac.comp;
 
 import java.util.*;
 
-import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.main.RecognizedOptions.PkgInfo;
@@ -2163,9 +2162,6 @@ public class Lower extends TreeTranslator {
                 Integer endPos = endPositions.remove(tree);
                 if (endPos != null) endPositions.put(result, endPos);
             }
-            JCExpression t = attr.removeTranslate(tree);
-            if (t!=null)
-                return (T) translate(t);
             return result;
         }
     }
@@ -2173,9 +2169,6 @@ public class Lower extends TreeTranslator {
     /** Visitor method: Translate a single node, boxing or unboxing if needed.
      */
     public <T extends JCTree> T translate(T tree, Type type) {
-        JCExpression t = attr.removeTranslate(tree);
-        if (t!=null)
-            return (T) translate(t);
         return (tree == null) ? null : boxIfNeeded(translate(tree), type);
     }
 
@@ -2966,17 +2959,12 @@ public class Lower extends TreeTranslator {
     }
 
     public void visitIndexed(JCArrayAccess tree) {
-    	if (types.isArray(tree.indexed.type)) {
-    		tree.indexed = translate(tree.indexed);
-        	tree.index = translate(tree.index, syms.intType);
-        	result = tree;
-    	} else {
-    		result = translate(tree.indexed);
-    	}
+        tree.indexed = translate(tree.indexed);
+        tree.index = translate(tree.index, syms.intType);
+        result = tree;
     }
 
     public void visitAssign(JCAssign tree) {
-        JCTree waslhs = tree.lhs;
         tree.lhs = translate(tree.lhs, tree);
         tree.rhs = translate(tree.rhs, tree.lhs.type);
 
@@ -2987,8 +2975,6 @@ public class Lower extends TreeTranslator {
             JCMethodInvocation app = (JCMethodInvocation)tree.lhs;
             app.args = List.of(tree.rhs).prependList(app.args);
             result = app;
-        } else if (waslhs.getKind() == Tree.Kind.ARRAY_ACCESS && !types.isArray(((JCArrayAccess)waslhs).indexed.type)) {
-            result = tree.lhs;
         } else {
             result = tree;
         }
