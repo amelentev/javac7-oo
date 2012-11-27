@@ -8,6 +8,7 @@ public class JCOOTest {
         compile("ListIndexGet");
         compile("ListIndexSet");
         compile("MapIndex");
+        compile("Vector");
         compile("CompAss", "../tests");
     }
     public static void compile(String clas) throws  Exception {
