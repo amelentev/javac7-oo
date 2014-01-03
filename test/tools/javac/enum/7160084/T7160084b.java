@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,33 +23,46 @@
 
 /*
  * @test
- * @bug     6440333
- * @summary SimpleJavaFileObject.toString() generates URI with some extra message
- * @author  Peter von der Ah\u00e9
- * @library ../lib
- * @build ToolTester
- * @compile T6440333.java
- * @run main T6440333
+ * @bug     7160084
+ * @summary javac fails to compile an apparently valid class/interface combination
  */
+public class T7160084b {
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import javax.tools.JavaFileObject;
+    static int assertionCount = 0;
 
-public class T6440333 extends ToolTester {
-    void test(String... args) throws IOException {
-        File path = test_src.getCanonicalFile();
-        File src = new File(new File(path, "."), "T6440333.java");
-        JavaFileObject fo = fm.getJavaFileObjects(src).iterator().next();
-        URI expect = src.getCanonicalFile().toURI();
-        System.err.println("Expect " + expect);
-        System.err.println("Found  " + fo.toUri());
-        if (!expect.equals(fo.toUri())) {
+    static void assertTrue(boolean cond) {
+        assertionCount++;
+        if (!cond) {
             throw new AssertionError();
         }
     }
-    public static void main(String... args) throws IOException {
-        new T6440333().test(args);
+
+    interface Extras {
+        static class Enums {
+            static class Component {
+                Component() { throw new RuntimeException("oops!"); }
+            }
+        }
+    }
+
+    interface Test {
+        public class Enums {
+            interface Widget {
+                enum Component { X, Y };
+            }
+
+            enum Component implements Widget, Extras {
+                Z;
+            };
+
+            public static void test() {
+               assertTrue(Component.values().length == 1);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        Test.Enums.test();
+        assertTrue(assertionCount == 1);
     }
 }

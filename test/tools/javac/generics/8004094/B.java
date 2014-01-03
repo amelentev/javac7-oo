@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+abstract class A {
 
-/*
- * @test
- * @bug     6421756
- * @summary 6421756 JSR 199: In the method JavaCompilerTool.getTask 'options' can be supplied in the place of 'classes'
- * @author  Peter von der Ah\u00e9
- * @library ../lib
- * @build ToolTester
- * @compile T6421756.java
- * @run main T6421756
- */
+    private static String s = null;
 
-import java.util.Collections;
-
-public class T6421756 extends ToolTester {
-    void test(String... args) {
-        Iterable<String> options = Collections.singleton("-verbose");
-        try {
-            task = tool.getTask(null, fm, null, null, options, null);
-            throw new AssertionError("Expected IllegalArgumentException!");
-        } catch (IllegalArgumentException e) {
-            System.out.println("OK: got expected error " + e.getLocalizedMessage());
-        }
+    static void test() {
+        new Object() {
+            void m() {
+                Object o = s;
+            }
+        };
     }
-    public static void main(String... args) {
-        new T6421756().test(args);
+}
+
+public abstract class B<T> extends A {
+
+    private static Integer i = null;
+
+    static void test() {
+        new Object() {
+            void m() {
+                Object o = i;
+            }
+        };
     }
 }
