@@ -3059,20 +3059,6 @@ public class Lower extends TreeTranslator {
     }
 
     public void visitUnary(JCUnary tree) {
-        if (tree.operator instanceof OperatorSymbol) {
-            // similar to #visitBinary
-            OperatorSymbol os = (OperatorSymbol) tree.operator;
-            if (os.opcode == ByteCodes.error+1) {
-                MethodSymbol ms = (MethodSymbol) os.owner;
-                JCFieldAccess meth = make.Select(tree.arg, ms.name);
-                meth.type = ms.type;
-                meth.sym = ms;
-                result = make.Apply(null, meth, List.<JCExpression>nil())
-                        .setType(tree.type);
-                result = translate(result);
-                return;
-            }
-        }
         boolean isUpdateOperator =
             JCTree.PREINC <= tree.getTag() && tree.getTag() <= JCTree.POSTDEC;
         if (isUpdateOperator && !tree.arg.type.isPrimitive()) {
@@ -3117,28 +3103,6 @@ public class Lower extends TreeTranslator {
     }
 
     public void visitBinary(JCBinary tree) {
-        if (tree.operator instanceof OperatorSymbol) {
-            OperatorSymbol os = (OperatorSymbol) tree.operator;
-            if (os.opcode == ByteCodes.error+1) { // if operator overloading?
-                MethodSymbol ms = (MethodSymbol) os.owner;
-                // construct method invocation ast
-                JCFieldAccess meth = make.Select(tree.lhs, ms.name);
-                meth.type = ms.type;
-                meth.sym = ms;
-                result = make.Apply(null, meth, List.of(tree.rhs))
-                        .setType( ((MethodType)ms.type).restype ); // tree.type may be != ms.type.restype. see below
-                if (ms.name.contentEquals("compareTo")) {
-                    // rewrite to `left.compareTo(right) </> 0`
-                    JCLiteral zero = make.Literal(0);
-                    JCBinary r = make.Binary(tree.getTag(), (JCExpression) result, zero);
-                    r.type = syms.booleanType;
-                    r.operator = rs.resolveBinaryOperator(make_pos, tree.getTag(), attrEnv, result.type, zero.type);
-                    result = r;
-                }
-                result = translate(result);
-                return;
-            }
-        }
         List<Type> formals = tree.operator.type.getParameterTypes();
         JCTree lhs = tree.lhs = translate(tree.lhs, formals.head);
         switch (tree.getTag()) {
