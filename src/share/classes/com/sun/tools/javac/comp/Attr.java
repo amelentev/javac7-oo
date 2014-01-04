@@ -2195,9 +2195,8 @@ public class Attr extends JCTree.Visitor {
                     m = rs.findMethod(env, atype, names.fromString("put"), argtypes, null, true, false, false); // Map#put
                 if (m.kind == Kinds.MTH) {
                     JCMethodInvocation mi = make.Apply(null, make.Select(tree.indexed, m), List.of(tree.index, ass.rhs));
-                    mi.type = attribExpr(mi, env);
+                    owntype = mi.type = attribExpr(mi, env);
                     translateMap.put(ass, mi);
-                    owntype = rhstype;
                     ok = true;
                 }
             } else {

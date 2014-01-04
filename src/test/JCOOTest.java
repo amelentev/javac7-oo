@@ -10,6 +10,7 @@ public class JCOOTest {
         compile("MapIndex");
         compile("Vector");
         compile("CompAss", "../tests");
+        compile("Boxing", "../tests");
     }
     public static void compile(String clas) throws  Exception {
         compile(clas, "../examples");
