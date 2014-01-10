@@ -254,7 +254,7 @@ public class Attr extends JCTree.Visitor {
             //log.error(pos, "assignment.to.extends-bound", req);
             return false; //types.createErrorType(found);
         }
-        return true;
+        return findMethods(req, List.of(found), "valueOf") != null;
     }
 
     /** Is given blank final variable assignable, i.e. in a scope where it
