@@ -11,6 +11,7 @@ public class JCOOTest {
         compile("Vector");
         compile("CompAss", "../tests");
         compile("Boxing", "../tests");
+        compile("Vec", "../tests");
     }
     public static void compile(String clas) throws  Exception {
         compile(clas, "../examples");
