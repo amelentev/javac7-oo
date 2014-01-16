@@ -7,3 +7,4 @@
 
 syntax: glob
 *.class
+.idea/workspace.xml
