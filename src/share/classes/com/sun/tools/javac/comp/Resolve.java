@@ -908,7 +908,7 @@ public class Resolve {
                       boolean useVarargs,
                       boolean operator) {
         Symbol bestSoFar = methodNotFound;
-        return findMethod(env,
+        bestSoFar = findMethod(env,
                           site,
                           name,
                           argtypes,
@@ -920,6 +920,7 @@ public class Resolve {
                           useVarargs,
                           operator,
                           new HashSet<TypeSymbol>());
+        return tryOperatorOverloading(env, name, argtypes, bestSoFar, operator);
     }
     // where
     private Symbol findMethod(Env<AttrContext> env,
@@ -975,7 +976,6 @@ public class Resolve {
                     bestSoFar = concrete;
             }
         }
-        bestSoFar = tryOperatorOverloading(env, name, argtypes, bestSoFar, operator);
         return bestSoFar;
     }
 

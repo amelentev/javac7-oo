@@ -12,6 +12,7 @@ public class JCOOTest {
         compile("CompAss", "../tests");
         compile("Boxing", "../tests");
         compile("Vec", "../tests");
+        compile("Abstract", "../tests");
     }
     public static void compile(String clas) throws  Exception {
         compile(clas, "../examples");
