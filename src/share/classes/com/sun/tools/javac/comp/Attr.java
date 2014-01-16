@@ -222,7 +222,7 @@ public class Attr extends JCTree.Visitor {
     /** try implicit conversion tree to pt type via #valueOf
      * @return static valueOf method call iff successful */
     JCMethodInvocation tryImplicitConversion(JCTree tree, Type owntype, Type req) {
-        if (!isBoxingAllowed(owntype, req))
+        if (!isImplicitConversionAllowed(owntype, req))
             return null;
         JCExpression param = translateMap.get(tree);
         // construct "<req>.valueOf(tree)" static method call
@@ -234,7 +234,7 @@ public class Attr extends JCTree.Visitor {
         valueOf.type = attribTree(valueOf, env, pkind, pt);
         return types.isAssignable(valueOf.type, req) ? valueOf : null;
     }
-    boolean isBoxingAllowed(Type found, Type req) {
+    boolean isImplicitConversionAllowed(Type found, Type req) {
         // similar to Check#checkType
         if (req.tag == ERROR)
             return false; // req
